@@ -1,8 +1,8 @@
 #include <vector>
 #include "../include/Player.hpp"
 
-#define GRAVITY -0.17f
-#define SPEED 3.0f
+#define GRAVITY -0.2f
+#define SPEED 2.0f
 
 Player::Player() {
     x = 200;
