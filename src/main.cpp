@@ -1,10 +1,22 @@
 #include <GLFW/glfw3.h>
 #include <iostream>
 #include <vector>
+#include <ctime>
 #include "../include/Player.hpp"
 #include "../include/Plataform.hpp"
 
-//movimentação do jogador
+const float MIN_DIST_X = 50.0f;
+const float MAX_DIST_X = 200.0f;
+
+const float MIN_DIST_Y = 70.0f;
+const float MAX_DIST_Y = 120.0f;
+
+// posição da câmera
+float cameraY = 0;
+
+int sequenciaVertical = 3;// contador de sequências verticais de plataformas
+
+// movimentação do jogador
 void processInput(GLFWwindow* window, Player& player) {
     if (glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS) {
         player.moveLeft();
@@ -44,6 +56,49 @@ void drawPlataforms(std::vector<Plataform>& plataforms) {
     }
 }
 
+// função para gerar um número aleatório
+float randFloat(float min, float max) {
+    return min + (rand() / (float)RAND_MAX) * (max - min);
+}
+
+void generatePlataforms(std::vector<Plataform>& plats, int quantidade) {
+
+    float lastX = 100;
+    float lastY = 100;
+
+    plats.push_back(Plataform(lastX, lastY, 100, 20));
+
+    for (int i = 1; i < quantidade; i++) {
+
+        float dx = randFloat(MIN_DIST_X, MAX_DIST_X);
+        float dy;
+
+        if (sequenciaVertical >= 2) {
+            // força mudança (plataforma mais deslocada)
+            dy = randFloat(70.0f, 90.0f); // menor subida
+            sequenciaVertical = 0;
+        } else {
+            dy = randFloat(MIN_DIST_Y, MAX_DIST_Y);
+            sequenciaVertical++;
+        }
+
+        if (rand() % 2 == 0)
+            dx *= -1;
+
+        float newX = lastX + dx;
+        float newY = lastY + dy;
+
+        // limitar tela
+        if (newX < 0) newX = 0;
+        if (newX > 600) newX = 600;
+
+        plats.push_back(Plataform(newX, newY, 100, 20));
+
+        lastX = newX;
+        lastY = newY;
+    }
+}
+
 int main() {
     
     if (!glfwInit()) return -1;
@@ -59,27 +114,41 @@ int main() {
     glOrtho(0, 800, 0, 600, -1, 1);
 
     // guardando as plataformas em um vetor
-    std::vector<Plataform> plataforms;
+    std::vector<Plataform> plataforms;  
+    
+    srand(time(0));
+    generatePlataforms(plataforms, 200);
 
     Player player;
 
-    plataforms.push_back(Plataform(0, 0, 800, 20));     // chão
-    plataforms.push_back(Plataform(200, 150, 200, 20)); // plataforma
-    plataforms.push_back(Plataform(450, 300, 200, 20));
+    plataforms.push_back(Plataform(0, 0, 800, 20));  // chão
 
     while (!glfwWindowShouldClose(window)) {
         processInput(window, player);
 
         player.update(plataforms);
 
+        // fazer a camera seguir o jogador
+        if (player.getY() > cameraY + 300) {
+            cameraY = player.getY() - 300;
+        }else if (player.getY() < cameraY + 100) {
+            cameraY = player.getY() - 100;
+            if (cameraY < 0) cameraY = 0;
+        }
+
         glClear(GL_COLOR_BUFFER_BIT);
+
+        glPushMatrix();
+        glTranslatef(0, -cameraY, 0);
 
         drawPlataforms(plataforms);
         drawPlayer(player);
 
         glfwSwapBuffers(window);
         glfwPollEvents();
+        glPopMatrix();
     }
 
     glfwTerminate();
+    
 }

@@ -1,8 +1,8 @@
 #include <vector>
 #include "../include/Player.hpp"
 
-#define GRAVITY -0.2f
-#define SPEED 2.0f
+#define GRAVITY -0.1f
+#define SPEED 1.3f
 
 Player::Player() {
     x = 200;
@@ -17,15 +17,22 @@ void Player::applyGravity() {
 
 void Player::moveLeft() {
     x -= SPEED;
+
+    if (x < 0)
+        x = 0;
 }
 
 void Player::moveRight() {
     x += SPEED;
+
+    if (x > 780)
+        x = 780;
 }
+
 
 void Player::jump() {
     if (noChao) {
-        velY = 10;
+        velY = 5;
         noChao = false;
     }
 }
@@ -45,13 +52,10 @@ void Player::checkCollision(std::vector<Plataform>& plataform) {
         float platLeft = p.x;
         float platRight = p.x + p.width;
 
-        //colisão vindo de cima
-        if (playerBottom <= platTop &&
-            playerBottom >= platTop - 10 &&
-            playerRight > platLeft &&
-            playerLeft < platRight &&
-            velY <= 0){
-
+        // colisão vindo de cima
+        if (playerBottom <= platTop && playerBottom >= platTop - 10 &&
+            playerRight > platLeft && playerLeft < platRight && velY <= 0){
+                
             y = platTop;
             velY = 0;
             noChao = true;
