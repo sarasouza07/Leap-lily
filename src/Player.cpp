@@ -2,7 +2,7 @@
 #include "../include/Player.hpp"
 
 #define GRAVITY -0.1f
-#define SPEED 1.3f
+#define SPEED 1.0f
 
 Player::Player() {
     x = 200;
@@ -32,7 +32,7 @@ void Player::moveRight() {
 
 void Player::jump() {
     if (noChao) {
-        velY = 5;
+        velY = 5.0f;
         noChao = false;
     }
 }
