@@ -326,12 +326,13 @@ int main() {
     loadTexture("assets/background.png");
 
     while (!glfwWindowShouldClose(window)) {
+
+    if (!win)
+    {
         processInput(window, player);
-
-        float lastVelY = player.getVelY();
-
         player.update(plataforms);
         checkWin(player);
+    }
 
         if (win) {
             glClear(GL_COLOR_BUFFER_BIT);
