@@ -23,6 +23,10 @@ class Player {
     void checkCollision(std::vector<Plataform>& plataforms);
     void update(std::vector<Plataform>& plataforms);
 
+    bool isOnGround();
+    void setPosition(float x, float y);
+    void setVelY(float v);
+
     float getX();
     float getY();
     float getVelY();

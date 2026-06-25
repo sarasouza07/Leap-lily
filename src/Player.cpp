@@ -6,7 +6,7 @@
 
 Player::Player() {
     x = 200;
-    y = 200;
+    y = 130;
     velY = 0;
     noChao = false;
     olhandoEsquerda = false;
@@ -37,7 +37,7 @@ void Player::moveRight() {
 
 void Player::jump() {
     if (noChao) {
-        velY = 5.0f;
+        velY = 5.3f;
         noChao = false;
     }
 }
@@ -53,7 +53,7 @@ void Player::checkCollision(std::vector<Plataform>& plataform) {
 
     for (auto& p : plataform) {
 
-        float platTop = p.y + p.height;
+        float platTop = p.y + p.height - 30;
         float platLeft = p.x;
         float platRight = p.x + p.width;
 
@@ -76,6 +76,17 @@ void Player::update(std::vector<Plataform>& plataforms) {
     checkCollision(plataforms);
 }
 
+void Player::setPosition(float px, float py) {
+    x = px;
+    y = py;
+}
+
+void Player::setVelY(float v) {
+    velY = v;
+}
+
+
+bool Player::isOnGround() { return noChao; }
 float Player::getX() { return x; }
 float Player::getY() { return y; }
 float Player::getVelY() { return velY; }

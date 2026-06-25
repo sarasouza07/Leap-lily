@@ -28,6 +28,13 @@ float cameraY = 0;
 
 int sequenciaVertical = 3;// contador de sequências verticais de plataformas
 
+bool isDead = false;
+float deathTimer = 0.0f;
+bool win = false;
+
+const float DEATH_TIME = 1.5f; // tempo até reset
+const float MAX_FALL_SPEED = -1.2f; // velocidade limite pra morrer
+
 void drawSprite(float x, float y, float w, float h, GLuint texture)
 {
     glEnable(GL_TEXTURE_2D);
@@ -112,6 +119,27 @@ void drawLily(GLuint texture)
     );
 }
 
+void checkWin(Player& player) {
+
+    float playerLeft = player.getX();
+    float playerRight = player.getX() + 40;
+    float playerBottom = player.getY();
+    float playerTop = player.getY() + 40;
+
+    float lilyLeft = lilyX;
+    float lilyRight = lilyX + 40;
+    float lilyBottom = lilyY;
+    float lilyTop = lilyY + 40;
+
+    if (playerRight > lilyLeft &&
+        playerLeft < lilyRight &&
+        playerTop > lilyBottom &&
+        playerBottom < lilyTop) {
+
+        win = true;
+    }
+}
+
 // função para atualizar a posição da Lily
 void updateLily(std::vector<Plataform>& plataform) {
     lilyVelY += GRAVITY_LILY;
@@ -123,7 +151,7 @@ void updateLily(std::vector<Plataform>& plataform) {
 
     for (auto& p : plataform) {
 
-        float platTop = p.y + p.height;
+        float platTop = p.y + p.height - 35;
         float platLeft = p.x;
         float platRight = p.x + p.width;
         
@@ -189,7 +217,7 @@ void generatePlataforms(std::vector<Plataform>& plats, int quantidade) {
         if (newX < 0) newX = 0;
         if (newX > 600) newX = 600;
 
-        plats.push_back(Plataform(newX, newY, 170, 60));
+        plats.push_back(Plataform(newX, newY, 130, 60));
 
         lastX = newX;
         lastY = newY;
@@ -300,8 +328,56 @@ int main() {
     while (!glfwWindowShouldClose(window)) {
         processInput(window, player);
 
-        player.update(plataforms);
+        float lastVelY = player.getVelY();
 
+        player.update(plataforms);
+        checkWin(player);
+
+        if (win) {
+            glClear(GL_COLOR_BUFFER_BIT);
+
+            glMatrixMode(GL_MODELVIEW);
+            glLoadIdentity();
+
+            glPushMatrix();
+            glTranslatef(0, -cameraY, 0);
+
+            drawBackground(tBackground);
+            drawPlayer(
+            player,
+            tParado,
+            tPuloDir,
+            tPuloEsq,
+            tCaindo);        
+            
+            drawLily(tLily);
+
+            glPopMatrix();
+
+            glfwSwapBuffers(window);
+            glfwPollEvents();
+            continue;
+        }
+
+        if (player.getVelY() < MAX_FALL_SPEED && player.isOnGround() || player.getY() < cameraY - 200) {
+            isDead = true;
+        }
+
+        if (isDead) {
+            deathTimer += 0.016f; // ~60 FPS
+            if (deathTimer >= DEATH_TIME) {
+                // RESET
+                player.setPosition(100, 150);
+                player.setVelY(0);
+
+                cameraY = 0;
+
+                isDead = false;
+                deathTimer = 0.0f;
+            }   
+            glColor3f(1.0f, 0.3f, 0.3f);    
+            return 0; // bloquear movimentação
+        }
 
         // fazer a camera seguir o jogador
         if (player.getY() > cameraY + 300) {
