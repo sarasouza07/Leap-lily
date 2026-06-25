@@ -9,6 +9,7 @@ Player::Player() {
     y = 200;
     velY = 0;
     noChao = false;
+    olhandoEsquerda = false;
 }
 
 void Player::applyGravity() {
@@ -16,6 +17,8 @@ void Player::applyGravity() {
 }
 
 void Player::moveLeft() {
+    olhandoEsquerda = true;
+
     x -= SPEED;
 
     if (x < 0)
@@ -23,6 +26,8 @@ void Player::moveLeft() {
 }
 
 void Player::moveRight() {
+    olhandoEsquerda = false;
+
     x += SPEED;
 
     if (x > 780)
@@ -40,9 +45,9 @@ void Player::jump() {
 void Player::checkCollision(std::vector<Plataform>& plataform) {
 
     float playerBottom = y;
-    float playerTop = y + 20;
+    float playerTop = y + 40;
     float playerLeft = x;
-    float playerRight = x + 20;
+    float playerRight = x + 40;
 
     noChao = false;
 
@@ -73,3 +78,4 @@ void Player::update(std::vector<Plataform>& plataforms) {
 
 float Player::getX() { return x; }
 float Player::getY() { return y; }
+float Player::getVelY() { return velY; }
