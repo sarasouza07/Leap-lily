@@ -4,6 +4,8 @@
 #include <ctime>
 #include "../include/Player.hpp"
 #include "../include/Plataform.hpp"
+#define STB_IMAGE_IMPLEMENTATION
+#include "../include/stb_image.h"
 
 const float MIN_DIST_X = 50.0f;
 const float MAX_DIST_X = 180.0f;
@@ -12,7 +14,7 @@ const float MIN_DIST_Y = 70.0f;
 const float MAX_DIST_Y = 120.0f;
 
 float lilyX = 200;
-float lilyY = 7115;
+float lilyY = 6950;
 
 float lilyVelY = 0;
 
@@ -25,6 +27,44 @@ const float MAX_HEIGHT = 7000.0f;
 float cameraY = 0;
 
 int sequenciaVertical = 3;// contador de sequências verticais de plataformas
+
+void drawSprite(float x, float y, float w, float h, GLuint texture)
+{
+    glEnable(GL_TEXTURE_2D);
+
+    glBindTexture(GL_TEXTURE_2D, texture);
+
+    glColor3f(1.0f, 1.0f, 1.0f);
+
+    glBegin(GL_QUADS);
+
+    glTexCoord2f(0.0f, 0.0f);
+    glVertex2f(x, y);
+
+    glTexCoord2f(1.0f, 0.0f);
+    glVertex2f(x + w, y);
+
+    glTexCoord2f(1.0f, 1.0f);
+    glVertex2f(x + w, y + h);
+
+    glTexCoord2f(0.0f, 1.0f);
+    glVertex2f(x, y + h);
+
+    glEnd();
+
+    glBindTexture(GL_TEXTURE_2D, 0);
+}
+
+void drawBackground(GLuint texture)
+{
+    drawSprite(
+        0,
+        cameraY,
+        800,
+        600,
+        texture
+    );
+}
 
 // movimentação do jogador
 void processInput(GLFWwindow* window, Player& player) {
@@ -40,32 +80,36 @@ void processInput(GLFWwindow* window, Player& player) {
     }
 }
 
-void drawPlayer(Player& player) {
-    float x = player.getX();
-    float y = player.getY();
+void drawPlayer(Player& player, GLuint parado, GLuint dir, GLuint esq, GLuint caindo) 
+{
+    GLuint tex;
 
-    glColor3f(1.0f, 0.0f, 0.0f);
+    if (player.getVelY() > 0)
+        tex = dir;
+    else if (player.getVelY() < 0)
+        tex = caindo;
+    else
+        tex = parado;
 
-    glBegin(GL_QUADS);  
-        glVertex2f(x, y);
-        glVertex2f(x + 20, y);
-        glVertex2f(x + 20, y + 20);
-        glVertex2f(x, y + 20);
-    glEnd();
+    drawSprite(
+        player.getX(),
+        player.getY(),
+        40,
+        40,
+        tex
+    );
 }
 
 // função para desenhar a Lily
-void drawLily() {
-
-    glColor3f(1, 0, 1);
-
-    glBegin(GL_QUADS);
-        glVertex2f(lilyX, lilyY);
-        glVertex2f(lilyX + 20, lilyY);
-        glVertex2f(lilyX + 20, lilyY + 20);
-        glVertex2f(lilyX, lilyY + 20);
-    glEnd();
-
+void drawLily(GLuint texture)
+{
+    drawSprite(
+        lilyX,
+        lilyY,
+        40,
+        40,
+        texture
+    );
 }
 
 // função para atualizar a posição da Lily
@@ -95,16 +139,19 @@ void updateLily(std::vector<Plataform>& plataform) {
     }
 }
 
-void drawPlataforms(std::vector<Plataform>& plataforms) {
-    glColor3f(1.0f, 1.0f, 1.0f);
-
-    for (auto& p : plataforms) {
-        glBegin(GL_QUADS);
-            glVertex2f(p.x, p.y);
-            glVertex2f(p.x + p.width, p.y);
-            glVertex2f(p.x + p.width, p.y + p.height);
-            glVertex2f(p.x, p.y + p.height);
-        glEnd();
+void drawPlataforms(
+    std::vector<Plataform>& plataforms,
+    GLuint textura)
+{
+    for(auto& p : plataforms)
+    {
+        drawSprite(
+            p.x,
+            p.y,
+            p.width,
+            p.height,
+            textura
+        );
     }
 }
 
@@ -118,7 +165,7 @@ void generatePlataforms(std::vector<Plataform>& plats, int quantidade) {
     float lastX = 100;
     float lastY = 100;
 
-    plats.push_back(Plataform(lastX, lastY, 100, 20));
+    plats.push_back(Plataform(lastX, lastY, 170, 60));
 
     for (int i = 1; i < quantidade; i++) {
 
@@ -142,7 +189,7 @@ void generatePlataforms(std::vector<Plataform>& plats, int quantidade) {
         if (newX < 0) newX = 0;
         if (newX > 600) newX = 600;
 
-        plats.push_back(Plataform(newX, newY, 100, 20));
+        plats.push_back(Plataform(newX, newY, 170, 60));
 
         lastX = newX;
         lastY = newY;
@@ -152,6 +199,48 @@ void generatePlataforms(std::vector<Plataform>& plats, int quantidade) {
         }
 
     }
+}
+
+GLuint loadTexture(const char* path)
+{
+    stbi_set_flip_vertically_on_load(true);
+
+    int width, height, channels;
+
+    unsigned char* data =
+        stbi_load(path, &width, &height, &channels, 4);
+
+        if (!data) {
+            std::cout << "ERRO AO CARREGAR: " << path << std::endl;
+            return 0;
+        }
+
+        std::cout << "Imagem carregada: " << path
+        << " (" << width << "x" << height << ")" << std::endl;
+
+    GLuint texture;
+
+    glGenTextures(1, &texture);
+    glBindTexture(GL_TEXTURE_2D, texture);
+
+    glTexImage2D(
+        GL_TEXTURE_2D,
+        0,
+        GL_RGBA,
+        width,
+        height,
+        0,
+        GL_RGBA,
+        GL_UNSIGNED_BYTE,
+        data
+    );
+
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+
+    stbi_image_free(data);
+
+    return texture;
 }
 
 int main() {
@@ -168,11 +257,15 @@ int main() {
     glLoadIdentity();
     glOrtho(0, 800, 0, 600, -1, 1);
 
+    glMatrixMode(GL_MODELVIEW);
+    glLoadIdentity();
+
     // guardando as plataformas em um vetor
     std::vector<Plataform> plataforms;  
     
     srand(time(0));
     generatePlataforms(plataforms, 200);
+
 
     Player player;
 
@@ -180,10 +273,35 @@ int main() {
     //plataforma para o teto
     plataforms.push_back(Plataform(0, 7085, 800, 20));
 
+    Plataform ultima = plataforms[plataforms.size() - 3];
+
+    // mais para a direita
+    lilyX = ultima.x + 80;
+
+    // em cima da plataforma
+    lilyY = ultima.y + ultima.height;
+
+    glEnable(GL_TEXTURE_2D);
+    glEnable(GL_BLEND); 
+    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+
+    GLuint tParado = loadTexture("assets/parado.png");
+    GLuint tPuloDir = loadTexture("assets/pulo_dir.png");
+    GLuint tPuloEsq = loadTexture("assets/pulo_esq.png");
+    GLuint tCaindo = loadTexture("assets/caindo.png");
+    GLuint tLily = loadTexture("assets/lily.png");
+
+    GLuint tPlataforma =
+    loadTexture("assets/plataforma.png");
+
+    GLuint tBackground =
+    loadTexture("assets/background.png");
+
     while (!glfwWindowShouldClose(window)) {
         processInput(window, player);
 
         player.update(plataforms);
+
 
         // fazer a camera seguir o jogador
         if (player.getY() > cameraY + 300) {
@@ -195,18 +313,33 @@ int main() {
 
         glClear(GL_COLOR_BUFFER_BIT);
 
+        glMatrixMode(GL_MODELVIEW);
+        glLoadIdentity();
+
         glPushMatrix();
         glTranslatef(0, -cameraY, 0);
 
-        drawPlataforms(plataforms);
-        drawPlayer(player);
-        drawLily();
+        drawBackground(tBackground);
 
-        updateLily(plataforms);
+        drawPlataforms(
+        plataforms,
+        tPlataforma);
+
+        drawPlayer(
+        player,
+        tParado,
+        tPuloDir,
+        tPuloEsq,
+        tCaindo);
+
+        drawLily(tLily);
+
+// updateLily(plataforms);
+glPopMatrix();
 
         glfwSwapBuffers(window);
         glfwPollEvents();
-        glPopMatrix();
+
     }
 
     glfwTerminate();
