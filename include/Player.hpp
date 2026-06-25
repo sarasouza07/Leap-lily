@@ -10,21 +10,22 @@ class Player {
         float x, y;
         float velY;
         bool noChao;
+        bool olhandoEsquerda;
 
-        
     public:
-        Player();
+    Player();
 
-        void moveLeft();
-        void moveRight();
-        void jump();
+    void moveLeft();
+    void moveRight();
+    void jump();
 
-        void applyGravity();
-        void checkCollision(std::vector<Plataform>& plataforms);
-        void update(std::vector<Plataform>& plataforms);
+    void applyGravity();
+    void checkCollision(std::vector<Plataform>& plataforms);
+    void update(std::vector<Plataform>& plataforms);
 
-        float getX();
-        float getY();
+    float getX();
+    float getY();
+    float getVelY();
 };
 
 #endif
